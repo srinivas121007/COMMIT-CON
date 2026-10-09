@@ -13,10 +13,16 @@ CLI usage: python -m pipeline.run --sample
 import argparse
 import json
 import sys
+from pathlib import Path
 import uuid
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, Tuple
 import pandas as pd
+
+# Ensure project root is in sys.path
+_root = str(Path(__file__).resolve().parent.parent.parent)
+if _root not in sys.path:
+    sys.path.insert(0, _root)
 
 from backend.pipeline.generator import generate_clean_dataset
 from backend.pipeline.corruptor import inject_corruption

@@ -8,6 +8,8 @@ issues, audit log, lineage tracing, review decisions, and export.
 import io
 import json
 import os
+import sys
+from pathlib import Path
 import zipfile
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
@@ -16,6 +18,11 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
+
+# Ensure project root is in sys.path regardless of launch directory
+_root = str(Path(__file__).resolve().parent.parent.parent)
+if _root not in sys.path:
+    sys.path.insert(0, _root)
 
 from backend.pipeline.generator import generate_clean_dataset
 from backend.pipeline.corruptor import inject_corruption
