@@ -221,6 +221,8 @@ def detect_typos(
 
     for table_name, df, id_col, fields in columns_to_check:
         for field in fields:
+            if field not in df.columns:
+                continue
             # Gather non-null trimmed string values
             values = [
                 str(v).strip()

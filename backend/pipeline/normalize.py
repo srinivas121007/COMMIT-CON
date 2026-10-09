@@ -264,71 +264,82 @@ def normalize_datasets(
     r_df = relationships_df.copy()
 
     # People normalization
-    norm_full_names = []
-    norm_first_names = []
-    norm_last_names = []
-    norm_dobs = []
-    dob_ambiguous_flags = []
-    norm_dods = []
-    norm_occupations = []
-    norm_birth_places = []
-    norm_genders = []
+    if "full_name" in p_df.columns:
+        norm_full_names = []
+        norm_first_names = []
+        norm_last_names = []
+        norm_dobs = []
+        dob_ambiguous_flags = []
+        norm_dods = []
+        norm_occupations = []
+        norm_birth_places = []
+        norm_genders = []
 
-    for _, row in p_df.iterrows():
-        nf, nfirst, nlast = normalize_person_name(row.get("full_name"))
-        norm_full_names.append(nf)
-        norm_first_names.append(nfirst)
-        norm_last_names.append(nlast)
+        for _, row in p_df.iterrows():
+            nf, nfirst, nlast = normalize_person_name(row.get("full_name"))
+            norm_full_names.append(nf)
+            norm_first_names.append(nfirst)
+            norm_last_names.append(nlast)
 
-        ndob, amb_dob = parse_and_normalize_date(row.get("dob"))
-        norm_dobs.append(ndob)
-        dob_ambiguous_flags.append(amb_dob)
+            ndob, amb_dob = parse_and_normalize_date(row.get("dob"))
+            norm_dobs.append(ndob)
+            dob_ambiguous_flags.append(amb_dob)
 
-        ndod, _ = parse_and_normalize_date(row.get("dod"))
-        norm_dods.append(ndod)
+            ndod, _ = parse_and_normalize_date(row.get("dod"))
+            norm_dods.append(ndod)
 
-        norm_occupations.append(clean_text(row.get("occupation")))
-        norm_birth_places.append(clean_text(row.get("birth_place_id")))
-        
-        g = str(row.get("gender") or "").strip().lower()
-        if g.startswith("m"):
-            norm_genders.append("m")
-        elif g.startswith("f"):
-            norm_genders.append("f")
-        else:
-            norm_genders.append("")
+            norm_occupations.append(clean_text(row.get("occupation")))
+            norm_birth_places.append(clean_text(row.get("birth_place_id")))
+            
+            g = str(row.get("gender") or "").strip().lower()
+            if g.startswith("m"):
+                norm_genders.append("m")
+            elif g.startswith("f"):
+                norm_genders.append("f")
+            else:
+                norm_genders.append("")
 
-    p_df["norm_full_name"] = norm_full_names
-    p_df["norm_first_name"] = norm_first_names
-    p_df["norm_last_name"] = norm_last_names
-    p_df["norm_dob"] = norm_dobs
-    p_df["norm_dob_ambiguous"] = dob_ambiguous_flags
-    p_df["norm_dod"] = norm_dods
-    p_df["norm_occupation"] = norm_occupations
-    p_df["norm_birth_place_id"] = norm_birth_places
-    p_df["norm_gender"] = norm_genders
+        p_df["norm_full_name"] = norm_full_names
+        p_df["norm_first_name"] = norm_first_names
+        p_df["norm_last_name"] = norm_last_names
+        p_df["norm_dob"] = norm_dobs
+        p_df["norm_dob_ambiguous"] = dob_ambiguous_flags
+        p_df["norm_dod"] = norm_dods
+        p_df["norm_occupation"] = norm_occupations
+        p_df["norm_birth_place_id"] = norm_birth_places
+        p_df["norm_gender"] = norm_genders
 
     # Places normalization
-    pl_df["norm_name"] = [normalize_place_name(x) for x in pl_df["name"]]
-    pl_df["norm_country"] = [normalize_place_name(x) for x in pl_df["country"]]
-    pl_df["norm_region"] = [clean_text(x) for x in pl_df["region"]]
+    if "name" in pl_df.columns:
+        pl_df["norm_name"] = [normalize_place_name(x) for x in pl_df["name"]]
+    if "country" in pl_df.columns:
+        pl_df["norm_country"] = [normalize_place_name(x) for x in pl_df["country"]]
+    if "region" in pl_df.columns:
+        pl_df["norm_region"] = [clean_text(x) for x in pl_df["region"]]
 
     # Events normalization
-    e_df["norm_title"] = [clean_text(x) for x in e_df["title"]]
-    e_dates = []
-    e_ambs = []
-    for d in e_df["date"]:
-        nd, amb = parse_and_normalize_date(d)
-        e_dates.append(nd)
-        e_ambs.append(amb)
-    e_df["norm_date"] = e_dates
-    e_df["norm_date_ambiguous"] = e_ambs
-    e_df["norm_event_type"] = [clean_text(x) for x in e_df["event_type"]]
-    e_df["norm_place_id"] = [clean_text(x) for x in e_df["place_id"]]
+    if "title" in e_df.columns:
+        e_df["norm_title"] = [clean_text(x) for x in e_df["title"]]
+    if "date" in e_df.columns:
+        e_dates = []
+        e_ambs = []
+        for d in e_df["date"]:
+            nd, amb = parse_and_normalize_date(d)
+            e_dates.append(nd)
+            e_ambs.append(amb)
+        e_df["norm_date"] = e_dates
+        e_df["norm_date_ambiguous"] = e_ambs
+    if "event_type" in e_df.columns:
+        e_df["norm_event_type"] = [clean_text(x) for x in e_df["event_type"]]
+    if "place_id" in e_df.columns:
+        e_df["norm_place_id"] = [clean_text(x) for x in e_df["place_id"]]
 
     # Relationships normalization
-    r_df["norm_rel_type"] = [clean_text(x) for x in r_df["rel_type"]]
-    r_df["norm_from_id"] = [clean_text(x) for x in r_df["from_id"]]
-    r_df["norm_to_id"] = [clean_text(x) for x in r_df["to_id"]]
+    if "rel_type" in r_df.columns:
+        r_df["norm_rel_type"] = [clean_text(x) for x in r_df["rel_type"]]
+    if "from_id" in r_df.columns:
+        r_df["norm_from_id"] = [clean_text(x) for x in r_df["from_id"]]
+    if "to_id" in r_df.columns:
+        r_df["norm_to_id"] = [clean_text(x) for x in r_df["to_id"]]
 
     return p_df, pl_df, e_df, r_df

@@ -46,8 +46,8 @@ def test_generator_zero_logical_violations():
     # 1. dod after dob
     for _, row in p.iterrows():
         dob = datetime.strptime(row["dob"], "%Y-%m-%d")
-        if row["dod"]:
-            dod = datetime.strptime(row["dod"], "%Y-%m-%d")
+        if pd.notna(row["dod"]) and row["dod"]:
+            dod = datetime.strptime(str(row["dod"]), "%Y-%m-%d")
             assert dod > dob, f"dod {dod} is not after dob {dob} for {row['person_id']}"
 
     # 2. No self-relationships
