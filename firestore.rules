@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Root dataset document access
+    match /datasets/{datasetId} {
+      allow read, write: if request.auth != null;
+
+      // original_records: read-only after creation, NEVER updated or deleted
+      match /original_records/{recordId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null;
+        allow update, delete: if false;
+      }
+
+      // repaired_records: canonical cleaned records
+      match /repaired_records/{recordId} {
+        allow read, write: if request.auth != null;
+      }
+
+      // change_log: audit trail entries with status tracking
+      match /change_log/{changeId} {
+        allow read, write: if request.auth != null;
+      }
+
+      // issues: open, resolved, ignored quality issues
+      match /issues/{issueId} {
+        allow read, write: if request.auth != null;
+      }
+
+      // quality_snapshots: before and after measurement scores
+      match /quality_snapshots/{snapshotId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+  }
+}

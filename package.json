@@ -1,0 +1,19 @@
+{
+  "name": "knowledge-repair-tool",
+  "version": "1.0.0",
+  "description": "Find and repair inconsistencies in corrupted knowledge datasets with complete explainability, traceability, and quality scoring",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/runTests.js",
+    "generate-data": "node data/exportSampleDataset.js"
+  },
+  "keywords": [
+    "knowledge-repair",
+    "data-quality",
+    "entity-resolution",
+    "firestore"
+  ],
+  "author": "",
+  "license": "MIT"
+}
