@@ -2,10 +2,12 @@
  * Knowledge Repair Tool - Single Page Application Router & Shell Controller
  * 
  * Manages:
- * - Hash-based client routing (#/dashboard, #/issues, #/duplicates, etc.)
- * - Theme switching (Dark/Light mode persistence in localStorage)
- * - Navigation links active state
+ * - Hash-based client routing (#/dashboard, #/issues, #/duplicates, #/contradictions, #/audit, #/quality, #/graph)
+ * - Theme switching with accessible contrast and localStorage persistence
+ * - Mobile responsive drawer & sidebar navigation
+ * - Navigation links active state & badge indicators
  * - Topbar dataset indicator and persistence status
+ * - Connection status monitoring with user-facing alerts
  */
 
 import { state, subscribe, runPipeline, loadDataset, showToast } from './state.js';
@@ -15,6 +17,7 @@ import { renderDuplicates } from './pages/duplicates.js';
 import { renderContradictions } from './pages/contradictions.js';
 import { renderAuditTrail } from './pages/auditTrail.js';
 import { renderQualityReport } from './pages/quality.js';
+import { renderGraph } from './pages/graph.js';
 import { createDatasetPackage } from '../data/generateDataset.js';
 
 let activeUnsubscribe = null;
@@ -27,33 +30,8 @@ const routes = {
   '#/contradictions': renderContradictions,
   '#/audit': renderAuditTrail,
   '#/quality': renderQualityReport,
-  '#/graph': (container) => renderPlaceholderPage(container, 'Entity Relationship Graph', 'Stage 5: Interactive Vis-network knowledge graph visualizing interconnected People, Places, and Events.')
+  '#/graph': renderGraph
 };
-
-function renderPlaceholderPage(container, title, description) {
-  container.innerHTML = `
-    <div style="padding: 20px;">
-      <h1 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 8px;">${title}</h1>
-      <p style="color: var(--text-secondary); margin-bottom: 24px;">${description}</p>
-      
-      <div class="card" style="text-align: center; padding: 60px 20px;">
-        <div style="width: 56px; height: 56px; border-radius: 12px; background: rgba(59, 130, 246, 0.1); color: #60a5fa; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-            <polyline points="2 17 12 22 22 17"></polyline>
-            <polyline points="2 12 12 17 22 12"></polyline>
-          </svg>
-        </div>
-        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 8px;">Scheduled for Next Stage</h3>
-        <p style="color: var(--text-muted); font-size: 0.875rem; max-width: 480px; margin: 0 auto 20px;">
-          This module is part of the staged roadmap. Return to the Dashboard to run pipeline analysis or explore the Issues and Duplicates pages.
-        </p>
-        <a href="#/dashboard" class="btn btn-primary btn-sm">Return to Dashboard</a>
-      </div>
-    </div>
-  `;
-  return () => {};
-}
 
 function handleNavigation() {
   const hash = window.location.hash || '#/dashboard';
@@ -82,9 +60,39 @@ function handleNavigation() {
   }
 }
 
+function updateThemeToggleIcon(theme) {
+  const themeToggle = document.getElementById('theme-toggle');
+  if (!themeToggle) return;
+
+  if (theme === 'dark') {
+    themeToggle.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      </svg>
+    `;
+    themeToggle.title = 'Switch to Light Theme';
+  } else {
+    themeToggle.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+    `;
+    themeToggle.title = 'Switch to Dark Theme';
+  }
+}
+
 function initTheme() {
   const savedTheme = localStorage.getItem('kr_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeToggleIcon(savedTheme);
 
   const themeToggle = document.getElementById('theme-toggle');
   if (themeToggle) {
@@ -93,8 +101,40 @@ function initTheme() {
       const next = current === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('kr_theme', next);
+      updateThemeToggleIcon(next);
+      showToast(`Switched to ${next} theme`, 'info', 2000);
     });
   }
+}
+
+function initMobileSidebar() {
+  const sidebarToggle = document.getElementById('sidebar-toggle');
+  const sidebar = document.getElementById('app-sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+
+  if (sidebarToggle && sidebar) {
+    sidebarToggle.addEventListener('click', () => {
+      const isOpen = sidebar.classList.toggle('open');
+      if (backdrop) backdrop.classList.toggle('active', isOpen);
+    });
+  }
+
+  if (backdrop && sidebar) {
+    backdrop.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      backdrop.classList.remove('active');
+    });
+  }
+
+  // Auto-close sidebar on mobile after clicking navigation links
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      if (sidebar && sidebar.classList.contains('open')) {
+        sidebar.classList.remove('open');
+        if (backdrop) backdrop.classList.remove('active');
+      }
+    });
+  });
 }
 
 function updateHeader() {
@@ -134,6 +174,7 @@ function updateHeader() {
 if (typeof window !== 'undefined') {
   window.addEventListener('DOMContentLoaded', async () => {
     initTheme();
+    initMobileSidebar();
     subscribe(updateHeader);
 
     window.addEventListener('hashchange', handleNavigation);

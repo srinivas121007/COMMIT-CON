@@ -74,6 +74,9 @@ onConnectionStatusChange((status) => {
     isConnected: status.isConnected,
     mode: status.isConnected ? 'firestore' : 'local'
   };
+  if (status.error) {
+    showToast(`Firestore Alert: ${status.error}. Operating in local storage mode.`, 'danger', 6000);
+  }
   notifyStateChange();
 });
 

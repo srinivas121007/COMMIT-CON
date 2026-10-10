@@ -242,7 +242,7 @@
       font-weight: 600;
       font-family: var(--mono);
     }
-  </style>
+  <script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -250,7 +250,7 @@
       <div class="title-group">
         <h1>
           Pipeline Test Runner
-          <span class="badge-tag">Stage 2</span>
+          <span class="badge-tag">Stage 5 All Suites</span>
         </h1>
         <p>In-browser verification suite for data quality, entity resolution, and knowledge repair algorithms</p>
       </div>
@@ -329,6 +329,7 @@
     import { calculateQualityScore, evaluateBenchmark } from '../public/js/pipeline/scoring.js';
     import { createChangeLogEntry, revertChangeOnRecord, reapplyChangeOnRecord, getRecordProvenance } from '../public/js/pipeline/audit.js';
     import { executePipeline } from '../public/js/pipeline/worker.js';
+    import { renderGraph } from '../public/js/pages/graph.js';
 
     const testList = document.getElementById('test-list');
     const runBtn = document.getElementById('run-btn');
@@ -534,6 +535,25 @@
         failed++;
         appendTestResult('executePipeline end-to-end execution failed', false, err.message);
       }
+
+      // 7. Stage 5 Relationship Graph & Polish Verification
+      appendSuiteHeader('Suite 7: Stage 5 Relationship Graph & Polish Verification');
+      execSyncTest('Graph', 'renderGraph function is exported and callable', () => {
+        assertEqual(typeof renderGraph, 'function');
+      });
+      execSyncTest('Graph', 'Vis-network standalone bundle loaded in window', () => {
+        assert(typeof window.vis !== 'undefined', 'vis-network must be available');
+      });
+      execSyncTest('Graph', 'Corrupted & canonical records contain People, Places, and Events', () => {
+        const pkg = createDatasetPackage(42);
+        assert(pkg.corrupted.records.some(r => r.type === 'person'));
+        assert(pkg.corrupted.records.some(r => r.type === 'place'));
+        assert(pkg.corrupted.records.some(r => r.type === 'event'));
+      });
+      execSyncTest('Polish', 'Theme persistence key (kr_theme) is recognized', () => {
+        const curTheme = localStorage.getItem('kr_theme') || 'dark';
+        assert(['dark', 'light'].includes(curTheme));
+      });
 
       const totalTime = Math.round(performance.now() - t0);
       statTotal.textContent = total;

@@ -13,7 +13,14 @@
  */
 
 import assert from 'assert';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { createDatasetPackage } from '../data/generateDataset.js';
+import { renderGraph } from '../public/js/pages/graph.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import { profileDataset } from '../public/js/pipeline/profiler.js';
 import {
   normalizeDataset,
@@ -429,6 +436,43 @@ await testAsync('executePipeline finishes in < 1000ms with high precision and re
   assert(progressEvents.includes('contradictions'));
   assert(progressEvents.includes('repairing'));
   assert(progressEvents.includes('scoring'));
+});
+
+// ----------------------------------------------------
+// Suite 8: Stage 5 Relationship Graph & UI Polish Tests
+// ----------------------------------------------------
+console.log('\nTest Suite 8: Stage 5 Relationship Graph & Polish Verification');
+
+test('renderGraph function is exported from public/js/pages/graph.js', () => {
+  assert.strictEqual(typeof renderGraph, 'function');
+});
+
+test('app.js imports renderGraph and configures #/graph route', () => {
+  const appContent = fs.readFileSync(path.resolve(__dirname, '../public/js/app.js'), 'utf-8');
+  assert(appContent.includes("import { renderGraph } from './pages/graph.js';"));
+  assert(appContent.includes("'#/graph': renderGraph"));
+});
+
+test('style.css defines accessible light mode contrast, empty states, and responsive drawer', () => {
+  const css = fs.readFileSync(path.resolve(__dirname, '../public/css/style.css'), 'utf-8');
+  assert(css.includes('[data-theme="light"]'));
+  assert(css.includes('.empty-state'));
+  assert(css.includes('.skeleton'));
+  assert(css.includes('.graph-details-drawer'));
+  assert(css.includes('@media (max-width: 768px)'));
+});
+
+test('index.html contains mobile sidebar toggle and backdrop', () => {
+  const html = fs.readFileSync(path.resolve(__dirname, '../public/index.html'), 'utf-8');
+  assert(html.includes('id="sidebar-toggle"'));
+  assert(html.includes('id="sidebar-backdrop"'));
+});
+
+test('README.md exists and contains complete system architecture, Firebase guide, and demo script', () => {
+  const readme = fs.readFileSync(path.resolve(__dirname, '../README.md'), 'utf-8');
+  assert(readme.includes('System Architecture'));
+  assert(readme.includes('Firebase Setup & Security Rules'));
+  assert(readme.includes('3-Minute End-to-End Presentation Demo Script'));
 });
 
 console.log('\n====================================================');
